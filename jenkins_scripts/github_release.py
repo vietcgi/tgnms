@@ -8,6 +8,7 @@ from datetime import date
 
 import click
 import requests
+from shared import get_tag_prefix, get_next_tag, read, get_release
 
 API_URL = "https://api.github.com/repos/terragraph/tgnms"
 
@@ -23,6 +24,7 @@ def cli(ctx):
         ctx.exit(1)
 
 
+# TODO add a tag-force option
 @cli.command()
 @click.option("-b", "--branch", help="Github release branch", required=True)
 @click.option(
@@ -34,25 +36,14 @@ def cli(ctx):
 def tag(ctx, branch, push):
     release = get_release(branch)
     click.echo(f"Tagging for release: {release}")
-    if release == "latest":
-        tag_prefix = f'v{date.today().strftime("%y.%m.%d")}'
-    else:
-        tag_prefix = f"lts-{release}"
+    tag_prefix = get_tag_prefix(release)
     click.echo(f"Searching for tags with prefix: {tag_prefix}")
-    # search for all tags starting with this release num
-    tags = read(f'git tag -l "{tag_prefix}*"')
-    if tags:
-        tags = tags.split("\n")
-    print(f"Found {len(tags)} tags")
-    print("  Tags: ", tags)
-
-    # increments the tag every time this is run
-    tag = f"{tag_prefix}-{len(tags)}"
+    tag = get_next_tag(tag_prefix)
     print(f"Tagging commit with tag: {tag}")
-    run(f"git tag {tag}")
+    # run(f"git tag {tag}")
     if push:
         print(f"Pushing tag: {tag}")
-        run(f"git push origin {tag}")
+        # run(f"git push origin {tag}")
 
 
 @cli.command()
@@ -177,21 +168,6 @@ def release(ctx, tag, asset, name, draft, force):
 
 def run(cmd: str) -> None:
     subprocess.run(cmd, shell=True, check=True)
-
-
-def read(cmd: str) -> str:
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True, check=True)
-    return p.stdout.decode("utf-8").strip()
-
-
-def get_release(branch):
-    if re.search(r"origin/(main|master)", branch):
-        release = "latest"
-    elif m := re.search(r"origin/releases/lts-nms-(\d{2}\.\d{1,2})", branch):
-        release = m.group(1)
-    else:
-        raise RuntimeError(f"Cannot build for {branch}")
-    return release
 
 
 if __name__ == "__main__":
