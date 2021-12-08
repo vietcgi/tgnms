@@ -8,7 +8,7 @@ from datetime import date
 
 import click
 import requests
-from shared import get_tag_prefix, get_next_tag, read, get_release
+from shared import get_next_tag, read, get_release
 
 API_URL = "https://api.github.com/repos/terragraph/tgnms"
 
@@ -36,14 +36,13 @@ def cli(ctx):
 def tag(ctx, branch, push):
     release = get_release(branch)
     click.echo(f"Tagging for release: {release}")
-    tag_prefix = get_tag_prefix(release)
-    click.echo(f"Searching for tags with prefix: {tag_prefix}")
-    tag = get_next_tag(tag_prefix)
-    print(f"Tagging commit with tag: {tag}")
-    # run(f"git tag {tag}")
+    # Tag the image with the release version
+    tag = get_next_tag(release, printer=click.echo)
+    click.echo(f"Tagging commit with tag: {tag}")
+    run(f"git tag {tag}")
     if push:
-        print(f"Pushing tag: {tag}")
-        # run(f"git push origin {tag}")
+        click.echo(f"Pushing tag: {tag}")
+        run(f"git push origin {tag}")
 
 
 @cli.command()

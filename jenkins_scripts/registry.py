@@ -6,7 +6,7 @@ import re
 import subprocess
 from typing import Dict
 
-from shared import get_tag_prefix, get_next_tag, read, get_release
+from shared import get_next_tag, read, get_release
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -45,13 +45,15 @@ def build(args: argparse.Namespace) -> None:
         command += ["--target", stage]
 
     # Tag the image with the release version
-    tag_prefix = get_tag_prefix(release)
-    logging.info(f"Searching for github tags with prefix: {tag_prefix}")
-    version_tag = get_next_tag(tag_prefix)
-    logging.info(f"Tagging image with tag: {version_tag}")
+    if args.tag:
+        logging.info(f"Tagging image with custom tag: {args.tag}")
+        command += ["--tag", f"{args.registry}/{args.name}:{args.tag}"]
+    else:
+        version_tag = get_next_tag(release, printer=logger.info)
+        logging.info(f"Tagging image with tag: {version_tag}")
+        command += ["--tag", f"{args.registry}/{args.name}:{release}"]
+        command += ["--tag", f"{args.registry}/{args.name}:{version_tag}"]
 
-    command += ["--tag", f"{args.registry}/{args.name}:{release}"]
-    command += ["--tag", f"{args.registry}/{args.name}:{version_tag}"]
     command += ["--build-arg", f'"TAG={release}"']
     for arg in args.build_arg or []:
         command += ["--build-arg", f'"{arg}"']
@@ -81,6 +83,7 @@ def push(args: argparse.Namespace) -> None:
         push_cmd = f"docker push --all-tags {args.registry}/{args.name}"
     run(push_cmd)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Docker registry CLI parser for TG")
     subparsers = parser.add_subparsers(title="actions")
@@ -98,6 +101,10 @@ if __name__ == "__main__":
         default="secure.cxl-terragraph.com:443",
     )
     build_parser.add_argument("--stage", help="specify a Dockerfile stage")
+    build_parser.add_argument(
+        "--tag",
+        help="tag this image with this tag only",
+    )
     build_parser.set_defaults(func=build)
 
     push_parser = subparsers.add_parser("push")

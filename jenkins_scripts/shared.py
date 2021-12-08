@@ -14,21 +14,23 @@ def get_tag_prefix(release):
     return tag_prefix
 
 
-def get_next_tag(tag_prefix):
+def get_next_tag(release, printer=lambda x: print(x)):
     """
-    Constructs the next lexicographical tag based on the one passed in.
+    Constructs the next lexicographical tag based the release.
     """
+    printer(f"Searching for github tags with prefix: {tag_prefix}")
+    tag_prefix = get_tag_prefix(release)
+
     # search for all tags starting with this release num
     tags = read(f'git tag -l "{tag_prefix}*"')
     if tags:
         tags = tags.split("\n")
 
-    # TODO have this take in a logger or a printer of some sort?
-    print(f"Found {len(tags)} tags")
-    print("  Tags: ", tags)
+    printer(f"Found {len(tags)} tags")
+    printer("  Tags: ", tags)
     # increments the tag every time this is run
     new_tag = f"{tag_prefix}-{len(tags)}"
-    print(f"Next tag is: {new_tag}")
+    printer(f"Next tag is: {new_tag}")
     return new_tag
 
 
