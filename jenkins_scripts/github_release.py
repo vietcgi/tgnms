@@ -24,7 +24,6 @@ def cli(ctx):
         ctx.exit(1)
 
 
-# TODO add a tag-force option
 @cli.command()
 @click.option("-b", "--branch", help="Github release branch", required=True)
 @click.option(
@@ -32,17 +31,26 @@ def cli(ctx):
     help="Should created tags be pushed to the origin repo",
     default=True,
 )
+@click.option(
+    "--tag",
+    help="Overwrite the release tag with this custom tag.",
+)
 @click.pass_context
-def tag(ctx, branch, push):
+def tag(ctx, branch, push, tag):
     release = get_release(branch)
     click.echo(f"Tagging for release: {release}")
     # Tag the image with the release version
-    tag = get_next_tag(release, printer=click.echo)
-    click.echo(f"Tagging commit with tag: {tag}")
-    run(f"git tag {tag}")
+    if tag:
+        version_tag = tag
+        click.echo(f"Tagging commit with custom tag: {version_tag}")
+    else:
+        version_tag = get_next_tag(release, printer=click.echo)
+        click.echo(f"Tagging commit with tag: {version_tag}")
+
+    run(f"git tag {version_tag}")
     if push:
-        click.echo(f"Pushing tag: {tag}")
-        run(f"git push origin {tag}")
+        click.echo(f"Pushing tag: {version_tag}")
+        run(f"git push origin {version_tag}")
 
 
 @cli.command()
