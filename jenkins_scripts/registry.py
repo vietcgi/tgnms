@@ -75,8 +75,11 @@ def push(args: argparse.Namespace) -> None:
         f"{args.registry}/v2",
     ]
     run(" ".join(command))
-    run(f"docker push {args.registry}/{args.name}")
-
+    if args.tag:
+        push_cmd = f"docker push {args.registry}/{args.name}:{args.tag}"
+    else:
+        push_cmd = f"docker push --all-tags {args.registry}/{args.name}"
+    run(push_cmd)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Docker registry CLI parser for TG")
@@ -105,6 +108,10 @@ if __name__ == "__main__":
         default="secure.cxl-terragraph.com:443",
     )
     push_parser.add_argument("--username", help="docker registry username")
+    push_parser.add_argument(
+        "--tag",
+        help="specific docker image tag to push, default is all tags in repository",
+    )
     push_parser.set_defaults(func=push)
 
     args = parser.parse_args()

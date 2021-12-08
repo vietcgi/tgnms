@@ -23,6 +23,7 @@ def get_next_tag(tag_prefix):
     if tags:
         tags = tags.split("\n")
 
+    # TODO have this take in a logger or a printer of some sort?
     print(f"Found {len(tags)} tags")
     print("  Tags: ", tags)
     # increments the tag every time this is run
