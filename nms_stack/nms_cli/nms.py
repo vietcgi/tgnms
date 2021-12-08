@@ -35,7 +35,7 @@ def get_nms_version():
     """
     # TODO or should we change our version scheme to the PEP-440 standard?
     version = pkg_resources.get_distribution("nms").version
-    return version.replace(".post", "-") if version else version
+    return f'v{version.replace(".post", "-")}' if version else version
 
 
 def record_version(logger):
