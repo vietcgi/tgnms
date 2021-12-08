@@ -3,12 +3,14 @@
 # Copyright (c) Facebook, Inc.
 
 import os
+from datetime import date
 from sys import version_info
 
 from setuptools import setup
 
 
 PACKAGE = "nms_cli"
+VERSION_FILE = "__version__"
 
 assert version_info >= (3, 7, 0), "nms requires >= Python 3.7"
 
@@ -34,9 +36,21 @@ def package_ansible(directory):
     return paths
 
 
+def get_version():
+    default = date.today().strftime("%y.%m.%d")
+    try:
+        with open(VERSION_FILE, "r") as f:
+            version = f.read()
+            f.close()
+
+        return version if version else default
+    except:
+        return default
+
+
 setup(
     name="nms",
-    version="2021.06.30",
+    version=get_version(),
     description=("nms cli"),
     packages=[PACKAGE, "{}.tests".format(PACKAGE)],
     package_data={PACKAGE: package_ansible("nms_stack") + package_ansible("k8s_nms")},

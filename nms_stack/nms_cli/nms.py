@@ -27,9 +27,20 @@ RAGE_DIR = os.path.join(os.path.expanduser("~"), ".nms_logs")
 executor = ansible_executor.ansible_executor
 
 
+def get_nms_version():
+    """
+    Our version name is automatically normalized to be PEP-440 compliant.
+    Here we convert it back to the same version scheme we use for images
+    github release tlagging.
+    """
+    # TODO or should we change our version scheme to the PEP-440 standard?
+    version = pkg_resources.get_distribution("nms").version
+    return version.replace(".post", "-") if version else version
+
+
 def record_version(logger):
     try:
-        version = pkg_resources.get_distribution("nms").version
+        version = get_nms_version()
     except Exception as e:
         version = f"[nms not packged, version unknown]\n{e}"
     logger.log(logging.DEBUG, f"nms version: {version}")
@@ -195,6 +206,7 @@ def add_installer_opts(common_opts=common_options.keys()):
             return ctx.invoke(f, InstallerOpts(**kwargs), *args)
 
         return update_wrapper(wrapper, f)
+
     return fn_wrapper
 
 
@@ -207,7 +219,7 @@ def cli(ctx, version, short):
     if version or short:
         longver = "Terragraph NMS cli utility version: {}"
         try:
-            verstr = pkg_resources.get_distribution("nms").version
+            verstr = get_nms_version()
         except Exception as e:
             click.echo("Cannot find package version, is this in a package?")
             click.echo(f"{e}")
@@ -422,14 +434,16 @@ def uninstall(ctx, installer_opts):
     a = executor(installer_opts.tags, installer_opts.verbose)
 
     variables = generate_variables(ctx, installer_opts)
-    variables.update({
-        "skip_backup": other_options.get('skip_backup'),
-        "delete_data": other_options.get('delete_data'),
-        "backup_file": os.path.abspath(other_options.get('backup_file')),
-        "remove_docker": other_options.get('remove_docker'),
-        "remove_gluster": other_options.get('remove_gluster'),
-        "force": other_options.get('force'),
-    })
+    variables.update(
+        {
+            "skip_backup": other_options.get("skip_backup"),
+            "delete_data": other_options.get("delete_data"),
+            "backup_file": os.path.abspath(other_options.get("backup_file")),
+            "remove_docker": other_options.get("remove_docker"),
+            "remove_gluster": other_options.get("remove_gluster"),
+            "force": other_options.get("force"),
+        }
+    )
     hosts = generate_host_groups(installer_opts.host)
     sys.exit(
         a.run(
