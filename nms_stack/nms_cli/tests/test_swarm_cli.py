@@ -104,7 +104,9 @@ class TestSwarmNmsCli(NmsTestUtils, unittest.TestCase):
         )
         # Hostnames and ssl cert/key is passed in via config file.
         self.check_command(f"install -f {get_config_file('swarm_config.yml')}")
-        self.check_command(f"install -f {get_config_file('swarm_config.yml')} -C my.cert.pem")
+        self.check_command(
+            f"install -f {get_config_file('swarm_config.yml')} -C my.cert.pem"
+        )
 
     def test_uninstall(self):
         self.check_command("uninstall -h fake_host")

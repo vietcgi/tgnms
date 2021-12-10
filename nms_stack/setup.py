@@ -3,7 +3,6 @@
 # Copyright (c) Facebook, Inc.
 
 import os
-from datetime import date
 from sys import version_info
 
 from setuptools import setup
