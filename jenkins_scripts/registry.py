@@ -49,7 +49,7 @@ def build(args: argparse.Namespace) -> None:
         logging.info(f"Tagging image with custom tag: {args.tag}")
         command += ["--tag", f"{args.registry}/{args.name}:{args.tag}"]
     else:
-        version_tag = get_next_tag(release, printer=logger.info)
+        version_tag = get_next_tag(release, printer=logging.info)
         logging.info(f"Tagging image with tag: {version_tag}")
         command += ["--tag", f"{args.registry}/{args.name}:{release}"]
         command += ["--tag", f"{args.registry}/{args.name}:{version_tag}"]
