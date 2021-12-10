@@ -10,7 +10,6 @@ from setuptools import setup
 
 
 PACKAGE = "nms_cli"
-VERSION_FILE = "__version__"
 
 assert version_info >= (3, 7, 0), "nms requires >= Python 3.7"
 
@@ -36,23 +35,17 @@ def package_ansible(directory):
     return paths
 
 
-def get_version():
-    default = date.today().strftime("%y.%m.%d")
-    if os.path.exists(VERSION_FILE):
-        with open(VERSION_FILE, "r") as f:
-            version = f.read()
-            f.close()
-        if version:
-            return version
-    return default
-
-
 setup(
     name="nms",
-    version=get_version(),
     description=("nms cli"),
     packages=[PACKAGE, "{}.tests".format(PACKAGE)],
-    package_data={PACKAGE: package_ansible("nms_stack") + package_ansible("k8s_nms")},
+    package_data={
+        PACKAGE: (
+            package_ansible("nms_stack")
+            + package_ansible("k8s_nms")
+            + [os.path.join("..", PACKAGE, "__version__")]
+        ),
+    },
     url="http://github.com/facebookexternal/terragraph-ansible/",
     author="Mike Nugent",
     author_email="mnugent@fb.com",

@@ -30,7 +30,7 @@ rm -f ${OUTPUT_FILE}
 
 # Construct version file
 echo "The build tag is: ${BUILD_TAG}"
-echo "${BUILD_TAG}" > __version__
+echo "${BUILD_TAG}" > nms_cli/__version__
 
 # Install Test Deps
 echo "Making venv"

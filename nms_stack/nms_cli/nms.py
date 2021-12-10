@@ -17,7 +17,7 @@ from pygments import highlight
 from pygments.formatters import TerminalFormatter
 from pygments.lexers import YamlLexer
 
-
+VERSION_FILE = "__version__"
 INSTALL_PLAYBOOK = "install.yml"
 UNINSTALL_PLAYBOOK = "uninstall.yml"
 VALIDATE_PLAYBOOK = "validate.yml"
@@ -29,22 +29,16 @@ executor = ansible_executor.ansible_executor
 
 
 def get_nms_version():
-    """
-    Our version name is automatically normalized to be PEP-440 compliant.
-    Here we convert it back to the same version scheme we use for images
-    github release tlagging.
-    """
-    # TODO or should we change our version scheme to the PEP-440 standard?
-    version = pkg_resources.get_distribution("nms").version
-    if version[:3] != "lts":
-        sections = version.split(".")
-        if len(sections[1]) == 1:
-            sections[1] = "0" + sections[1]
-        if len(sections[2]) == 1:
-            sections[2] = "0" + sections[2]
-        version = ".".join(sections)
-
-    return f'v{version.replace(".post", "-")}' if version else version
+    version_file = os.path.join(
+        os.path.dirname(__file__), VERSION_FILE
+    )
+    if os.path.exists(version_file):
+        with open(version_file, "r") as f:
+            version = f.read().strip()
+            f.close()
+        if version:
+            return version
+    return "No version exists."
 
 
 def get_version(installer_opts):
