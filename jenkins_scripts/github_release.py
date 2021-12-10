@@ -23,6 +23,7 @@ def cli(ctx):
         click.echo(ctx.get_help())
         ctx.exit(1)
 
+
 @cli.command()
 @click.option("-b", "--branch", help="Github release branch", required=True)
 @click.pass_context
@@ -30,6 +31,7 @@ def get_tag(ctx, branch):
     release = get_release(branch)
     version_tag = get_next_tag(release, printer=lambda x: x)
     print(version_tag)
+
 
 @cli.command()
 @click.option("-b", "--branch", help="Github release branch", required=True)

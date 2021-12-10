@@ -38,14 +38,13 @@ def package_ansible(directory):
 
 def get_version():
     default = date.today().strftime("%y.%m.%d")
-    try:
+    if os.path.exists(VERSION_FILE):
         with open(VERSION_FILE, "r") as f:
             version = f.read()
             f.close()
-
-        return version if version else default
-    except:
-        return default
+        if version:
+            return version
+    return default
 
 
 setup(
