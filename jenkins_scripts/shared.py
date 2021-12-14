@@ -19,7 +19,7 @@ def get_next_tag(release, printer=lambda x: print(x)):
     Constructs the next lexicographical tag based on the release.
     """
     tag_prefix = get_tag_prefix(release)
-    printer(f"Searching for github tags with prefix: {tag_prefix}")
+    printer(f"Searching for git tags with prefix: {tag_prefix}")
 
     # search for all tags starting with this release num
     tags = read(f'git tag -l "{tag_prefix}*"')
