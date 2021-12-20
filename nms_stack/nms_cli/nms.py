@@ -565,7 +565,10 @@ def _rage(ctx, clean, number):
 
 def run(cmd: str) -> None:
     print(f"Running: {cmd}")
-    return subprocess.run(cmd, shell=True, check=True)
+    try:
+        return subprocess.run(cmd, shell=True, check=True)
+    except e:
+        return e
 
 
 @cli.command()  # TODO add option to specify image name, registry, username, password(?)
@@ -593,8 +596,9 @@ def check_images(ctx, installer_opts):
     ]
     run(" ".join(command))
     status = run(
-        f'docker manifest inspect secure.cxl-terragraph.com:443/scan_service:{get_version(installer_opts)} > /dev/null'
+        f"docker manifest inspect secure.cxl-terragraph.com:443/scan_service:{get_version(installer_opts)} > /dev/null"
     )
+    print("STATUS")
     print(status)
     print(status.returncode)
 
