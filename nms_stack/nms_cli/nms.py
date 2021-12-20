@@ -570,7 +570,7 @@ def run(cmd: str) -> None:
         return e.returncode
 
 
-def check_images_exist(variables):
+def check_images_exist(images, variables):
     """Checks the docker registry for the images.
 
     Returns the images missing.
@@ -602,7 +602,7 @@ def check_images_exist(variables):
     run(" ".join(command))
 
     missing_images = []
-    for image in variables.get("docker_images", []):
+    for image in images:
         # Will return 0 if image exists, 1 if it does not.
         returncode = run(f"docker manifest inspect {image} > /dev/null")
         if returncode:
@@ -610,7 +610,14 @@ def check_images_exist(variables):
     return missing_images
 
 
-@cli.command()  # TODO add option to specify image name, username, password(?)
+@cli.command()
+@click.option(
+    "--images",
+    "-i",
+    multiple=True,
+    default=[],
+    help="The images to check. Default: all images defined in configuration file.",
+)
 @add_installer_opts(common_opts=["config-file", "image-version"])
 @click.pass_context
 @rage.log_command(RAGE_DIR)
@@ -621,7 +628,9 @@ def check_images(ctx, installer_opts):
     """
     version = get_version(installer_opts)
     variables = generate_variables(ctx, installer_opts, version)
-    missing_images = check_images_exist(variables)
+
+    images = installer_opts.other_options.get('images') or variables.get("docker_images", [])
+    missing_images = check_images_exist(images, variables)
     if len(missing_images):
         print("The following images are missing:")
         print("    " + "\n    ".join(missing_images))
