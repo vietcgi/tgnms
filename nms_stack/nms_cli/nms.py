@@ -6,6 +6,7 @@ import os
 import re
 import secrets
 import string
+import subprocess
 import sys
 from functools import update_wrapper
 
@@ -560,6 +561,42 @@ def _rage(ctx, clean, number):
             click.echo(filename)
             with open(filename, "r") as f:
                 click.echo(f.read())
+
+
+def run(cmd: str) -> None:
+    print(f"Running: {cmd}")
+    return subprocess.run(cmd, shell=True, check=True)
+
+
+@cli.command()  # TODO add option to specify image name, registry, username, password(?)
+@add_installer_opts(common_opts=["config-file", "image-version"])
+@click.pass_context
+@rage.log_command(RAGE_DIR)
+def check_images(ctx, installer_opts):
+    """Check for existance of images."""
+    # TODO check one hard-coded image version
+    # TODO get it to check whatever is in the config file.
+    # TODO get it to check the all file as a fallback
+    # TODO specific image version and name
+
+    # Login
+    command = [
+        "echo",
+        os.environ["DOCKER_PASSWORD"],
+        "|",
+        "docker",
+        "login",
+        "-u",
+        os.environ["DOCKER_USER"],
+        "--password-stdin",
+        f"secure.cxl-terragraph.com:443/v2",
+    ]
+    run(" ".join(command))
+    status = run(
+        f'docker manifest inspect secure.cxl-terragraph.com:443/scan_service:{get_version(installer_opts)} > /dev/null'
+    )
+    print(status)
+    print(status.returncode)
 
 
 if __name__ == "__main__":
