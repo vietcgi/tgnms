@@ -566,9 +566,9 @@ def _rage(ctx, clean, number):
 def run(cmd: str) -> None:
     print(f"Running: {cmd}")
     try:
-        return subprocess.run(cmd, shell=True, check=True)
+        return subprocess.run(cmd, shell=True, check=True).returncode
     except subprocess.CalledProcessError as e:
-        return e
+        return e.returncode
 
 
 @cli.command()  # TODO add option to specify image name, registry, username, password(?)
@@ -582,6 +582,8 @@ def check_images(ctx, installer_opts):
     # TODO get it to check the all file as a fallback
     # TODO specific image version and name
 
+    version = get_version(installer_opts)
+    variables = generate_variables(ctx, installer_opts, version)
     # Login
     command = [
         "echo",
@@ -592,15 +594,17 @@ def check_images(ctx, installer_opts):
         "-u",
         os.environ["DOCKER_USER"],
         "--password-stdin",
-        f"secure.cxl-terragraph.com:443/v2",
+        variables['docker_registry_url'],
     ]
     run(" ".join(command))
-    status = run(
-        f"docker manifest inspect secure.cxl-terragraph.com:443/scan_service:{get_version(installer_opts)} > /dev/null"
-    )
-    print("STATUS")
-    print(status)
-    print(status.returncode)
+
+    result = []
+    for image in variables['docker_images']:
+        returncode = run(
+            f"docker manifest inspect {image} > /dev/null"
+        )
+        result.append(returncode)
+    print(result)
 
 
 if __name__ == "__main__":
