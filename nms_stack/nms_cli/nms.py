@@ -571,40 +571,42 @@ def run(cmd: str) -> None:
         return e.returncode
 
 
-@cli.command()  # TODO add option to specify image name, registry, username, password(?)
+@cli.command()  # TODO add option to specify image name, username, password(?)
 @add_installer_opts(common_opts=["config-file", "image-version"])
 @click.pass_context
 @rage.log_command(RAGE_DIR)
 def check_images(ctx, installer_opts):
     """Check for existance of images."""
-    # TODO check one hard-coded image version
     # TODO get it to check whatever is in the config file.
     # TODO get it to check the all file as a fallback
     # TODO specific image version and name
 
     version = get_version(installer_opts)
     variables = generate_variables(ctx, installer_opts, version)
+
     # Login
     command = [
         "echo",
-        os.environ["DOCKER_PASSWORD"],
+        os.environ["DOCKER_PASSWORD"] or variable.get('docker_registry_password'),
         "|",
         "docker",
         "login",
         "-u",
-        os.environ["DOCKER_USER"],
+        os.environ["DOCKER_USER"] or variable.get('docker_registry_username'),
         "--password-stdin",
-        variables['docker_registry_url'],
+        variables.get('docker_registry_url'),
     ]
     run(" ".join(command))
 
     result = []
-    for image in variables['docker_images']:
-        returncode = run(
+    for image in variables.get('docker_images', []):
+        # Will return 0 if image exists, 1 if it does not.
+        result.append(run(
             f"docker manifest inspect {image} > /dev/null"
-        )
-        result.append(returncode)
-    print(result)
+        ))
+
+    missing_images_count = len([code for code in result if code])
+    return 1 if missing_images_count else 0
 
 
 if __name__ == "__main__":
