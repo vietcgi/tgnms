@@ -567,7 +567,7 @@ def run(cmd: str) -> None:
     print(f"Running: {cmd}")
     try:
         return subprocess.run(cmd, shell=True, check=True)
-    except e:
+    except subprocess.CalledProcessError as e:
         return e
 
 
