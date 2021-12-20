@@ -583,7 +583,7 @@ def check_images_exist(variables):
     docker_username = (
         variables.get("docker_registry_username") or os.environ["DOCKER_USER"]
     )
-    if not (docker_password and docker_username and registry):
+    if not (docker_password and docker_username and docker_registry):
         raise RuntimeError(
             "Missing docker password/username/registry. Please specify in your configuration file."
         )
