@@ -564,7 +564,6 @@ def _rage(ctx, clean, number):
 
 
 def run(cmd: str) -> None:
-    print(f"Running: {cmd}")
     try:
         return subprocess.run(cmd, shell=True, check=True).returncode
     except subprocess.CalledProcessError as e:
@@ -625,7 +624,7 @@ def check_images(ctx, installer_opts):
     missing_images = check_images_exist(variables)
     if len(missing_images):
         print("The following images are missing: \n")
-        print("\n".join(missing_images))
+        print("\n    ".join(missing_images))
         ctx.exit(1)
     else:
         ctx.exit()
