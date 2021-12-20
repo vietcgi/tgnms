@@ -606,7 +606,7 @@ def check_images(ctx, installer_opts):
         ))
 
     missing_images_count = len([code for code in result if code])
-    return 1 if missing_images_count else 0
+    return ctx.exit(1) if missing_images_count else ctx.exit(0)
 
 
 if __name__ == "__main__":
