@@ -571,16 +571,21 @@ def run(cmd: str) -> None:
         return e.returncode
 
 
-def check_images_exist(images, username, password):
+def check_images_exist(variables):
     """Checks the docker registry for the images.
 
     Returns the images missing.
     """
-    docker_password = password or os.environ["DOCKER_PASSWORD"]
-    docker_username = username or os.environ["DOCKER_USER"]
-    if not (docker_password and docker_username):
+    docker_registry = variables.get("docker_registry_url")
+    docker_password = (
+        variables.get("docker_registry_password") or os.environ["DOCKER_PASSWORD"]
+    )
+    docker_username = (
+        variables.get("docker_registry_username") or os.environ["DOCKER_USER"]
+    )
+    if not (docker_password and docker_username and registry):
         raise RuntimeError(
-            "Missing docker password/username. Please specify in your configuration file."
+            "Missing docker password/username/registry. Please specify in your configuration file."
         )
 
     # Login
@@ -593,12 +598,12 @@ def check_images_exist(images, username, password):
         "-u",
         docker_username,
         "--password-stdin",
-        variables.get("docker_registry_url"),
+        docker_registry,
     ]
     run(" ".join(command))
 
     missing_images = []
-    for image in images:
+    for image in variables.get("docker_images", []):
         # Will return 0 if image exists, 1 if it does not.
         returncode = run(f"docker manifest inspect {image} > /dev/null")
         if returncode:
@@ -611,14 +616,13 @@ def check_images_exist(images, username, password):
 @click.pass_context
 @rage.log_command(RAGE_DIR)
 def check_images(ctx, installer_opts):
-    """Check for existance of images."""
+    """Check for existance of images.
+
+    This checks in the registry defined in your configuration file.
+    """
     version = get_version(installer_opts)
     variables = generate_variables(ctx, installer_opts, version)
-    missing_images = check_images_exist(
-        images=variables.get("docker_images", []),
-        username=variable.get("docker_registry_username"),
-        password=variable.get("docker_registry_password"),
-    )
+    missing_images = check_images_exist(variables)
     if len(missing_images):
         print("The following images are missing: \n")
         print("\n".join(missing_images))
