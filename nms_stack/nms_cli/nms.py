@@ -623,10 +623,11 @@ def check_images(ctx, installer_opts):
     variables = generate_variables(ctx, installer_opts, version)
     missing_images = check_images_exist(variables)
     if len(missing_images):
-        print("The following images are missing: \n")
-        print("\n    ".join(missing_images))
+        print("The following images are missing:")
+        print("    " + "\n    ".join(missing_images))
         ctx.exit(1)
     else:
+        print("All images exist in the registry.")
         ctx.exit()
 
 
