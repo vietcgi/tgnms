@@ -246,14 +246,14 @@ def check_images_exist(variables):
 
     Returns the images missing.
     """
-    docker_registry = (
-        variables.get("docker_registry_url") or os.environ.get("DOCKER_REGISTRY")
+    docker_registry = variables.get("docker_registry_url") or os.environ.get(
+        "DOCKER_REGISTRY"
     )
-    docker_password = (
-        variables.get("docker_registry_password") or os.environ.get("DOCKER_PASSWORD")
+    docker_password = variables.get("docker_registry_password") or os.environ.get(
+        "DOCKER_PASSWORD"
     )
-    docker_username = (
-        variables.get("docker_registry_username") or os.environ.get("DOCKER_USER")
+    docker_username = variables.get("docker_registry_username") or os.environ.get(
+        "DOCKER_USER"
     )
     if not (docker_password and docker_username and docker_registry):
         raise RuntimeError(
@@ -488,7 +488,7 @@ def check_images(ctx, installer_opts):
     variables = generate_variables(ctx, installer_opts, version)
     missing_images = check_images_exist(variables)
 
-    ctx.exit(1) if len(missing_images) else ctx.exit()
+    # ctx.exit(1) if len(missing_images) else ctx.exit()
 
 
 @cli.command()
