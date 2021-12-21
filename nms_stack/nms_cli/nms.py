@@ -246,19 +246,24 @@ def check_images_exist(variables):
 
     Returns the images missing.
     """
-    docker_registry = variables.get("docker_registry_url")
+    docker_registry = (
+        variables.get("docker_registry_url") or os.environ.get("DOCKER_REGISTRY")
+    )
     docker_password = (
-        variables.get("docker_registry_password") or os.environ["DOCKER_PASSWORD"]
+        variables.get("docker_registry_password") or os.environ.get("DOCKER_PASSWORD")
     )
     docker_username = (
-        variables.get("docker_registry_username") or os.environ["DOCKER_USER"]
+        variables.get("docker_registry_username") or os.environ.get("DOCKER_USER")
     )
     if not (docker_password and docker_username and docker_registry):
-        raise RuntimeError((
-            "Missing docker password/username/registry. "
-            "Please specify in your configuration file or "
-            "as environment variables: DOCKER_PASSWORD and DOCKER_USER."
-        ))
+        raise RuntimeError(
+            (
+                "Missing docker password/username/registry. "
+                "Please specify in your configuration file or "
+                "as environment variables: DOCKER_PASSWORD, "
+                "DOCKER_USER, and DOCKER_REGISTRY"
+            )
+        )
 
     # Login
     command = [
