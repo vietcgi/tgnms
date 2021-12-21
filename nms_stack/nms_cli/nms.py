@@ -254,9 +254,11 @@ def check_images_exist(variables):
         variables.get("docker_registry_username") or os.environ["DOCKER_USER"]
     )
     if not (docker_password and docker_username and docker_registry):
-        raise RuntimeError(
-            "Missing docker password/username/registry. Please specify in your configuration file."
-        )
+        raise RuntimeError((
+            "Missing docker password/username/registry. "
+            "Please specify in your configuration file or "
+            "as environment variables: DOCKER_PASSWORD and DOCKER_USER."
+        ))
 
     # Login
     command = [
@@ -474,6 +476,8 @@ def check_images(ctx, installer_opts):
     """Check for existance of images.
 
     This checks in the registry defined in your configuration file.
+    If `image-version` is NOT passed in, then we use the same version
+    as the installer as the image tag to lookup.
     """
     version = get_version(installer_opts)
     variables = generate_variables(ctx, installer_opts, version)
