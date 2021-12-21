@@ -234,6 +234,58 @@ def add_common_options(*args):
     return wrapper
 
 
+def run(cmd: str) -> None:
+    try:
+        return subprocess.run(cmd, shell=True, check=True).returncode
+    except subprocess.CalledProcessError as e:
+        return e.returncode
+
+
+def check_images_exist(variables):
+    """Checks the docker registry for the images.
+
+    Returns the images missing.
+    """
+    docker_registry = variables.get("docker_registry_url")
+    docker_password = (
+        variables.get("docker_registry_password") or os.environ["DOCKER_PASSWORD"]
+    )
+    docker_username = (
+        variables.get("docker_registry_username") or os.environ["DOCKER_USER"]
+    )
+    if not (docker_password and docker_username and docker_registry):
+        raise RuntimeError(
+            "Missing docker password/username/registry. Please specify in your configuration file."
+        )
+
+    # Login
+    command = [
+        "echo",
+        docker_password,
+        "|",
+        "docker",
+        "login",
+        "-u",
+        docker_username,
+        "--password-stdin",
+        docker_registry,
+    ]
+    run(" ".join(command))
+
+    missing_images = []
+    for image in variables.get("docker_images", []):
+        # Will return 0 if image exists, 1 if it does not.
+        returncode = run(f"docker manifest inspect {image} > /dev/null")
+        if returncode:
+            missing_images.append(image)
+    if len(missing_images):
+        print("The following images are missing:")
+        print("    " + "\n    ".join(missing_images))
+    else:
+        print("All images exist in the registry.")
+    return missing_images
+
+
 class InstallerOpts(object):
     def __init__(self, *args, **kwargs):
         self.config_file = kwargs.pop("config_file", None)
@@ -415,6 +467,28 @@ def load_variables(config_file):
 
 
 @cli.command()
+@add_installer_opts(common_opts=["config-file", "image-version"])
+@click.pass_context
+@rage.log_command(RAGE_DIR)
+def check_images(ctx, installer_opts):
+    """Check for existance of images.
+
+    This checks in the registry defined in your configuration file.
+    """
+    version = get_version(installer_opts)
+    variables = generate_variables(ctx, installer_opts, version)
+    missing_images = check_images_exist(variables)
+
+    ctx.exit(1) if len(missing_images) else ctx.exit()
+
+
+@cli.command()
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Fails the install if any images don't exist in the registry.",
+)
 @add_installer_opts()
 @click.pass_context
 @rage.log_command(RAGE_DIR)
@@ -426,6 +500,12 @@ def install(ctx, installer_opts):
 
     version = get_version(installer_opts)
     variables = generate_variables(ctx, installer_opts, version)
+
+    if installer_opts.other_options.get("strict"):
+        missing_images = check_images_exist(variables)
+        if len(missing_images):
+            ctx.exit(1)
+
     hosts = gather_hosts(ctx, installer_opts, variables)
     a = prepare_ansible(ctx, installer_opts, variables)
     sys.exit(
@@ -561,74 +641,6 @@ def _rage(ctx, clean, number):
             click.echo(filename)
             with open(filename, "r") as f:
                 click.echo(f.read())
-
-
-def run(cmd: str) -> None:
-    try:
-        return subprocess.run(cmd, shell=True, check=True).returncode
-    except subprocess.CalledProcessError as e:
-        return e.returncode
-
-
-def check_images_exist(variables):
-    """Checks the docker registry for the images.
-
-    Returns the images missing.
-    """
-    docker_registry = variables.get("docker_registry_url")
-    docker_password = (
-        variables.get("docker_registry_password") or os.environ["DOCKER_PASSWORD"]
-    )
-    docker_username = (
-        variables.get("docker_registry_username") or os.environ["DOCKER_USER"]
-    )
-    if not (docker_password and docker_username and docker_registry):
-        raise RuntimeError(
-            "Missing docker password/username/registry. Please specify in your configuration file."
-        )
-
-    # Login
-    command = [
-        "echo",
-        docker_password,
-        "|",
-        "docker",
-        "login",
-        "-u",
-        docker_username,
-        "--password-stdin",
-        docker_registry,
-    ]
-    run(" ".join(command))
-
-    missing_images = []
-    for image in variables.get("docker_images", []):
-        # Will return 0 if image exists, 1 if it does not.
-        returncode = run(f"docker manifest inspect {image} > /dev/null")
-        if returncode:
-            missing_images.append(image)
-    return missing_images
-
-
-@cli.command()
-@add_installer_opts(common_opts=["config-file", "image-version"])
-@click.pass_context
-@rage.log_command(RAGE_DIR)
-def check_images(ctx, installer_opts):
-    """Check for existance of images.
-
-    This checks in the registry defined in your configuration file.
-    """
-    version = get_version(installer_opts)
-    variables = generate_variables(ctx, installer_opts, version)
-    missing_images = check_images_exist(variables)
-    if len(missing_images):
-        print("The following images are missing:")
-        print("    " + "\n    ".join(missing_images))
-        ctx.exit(1)
-    else:
-        print("All images exist in the registry.")
-        ctx.exit()
 
 
 if __name__ == "__main__":
