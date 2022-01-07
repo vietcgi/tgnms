@@ -19,7 +19,7 @@ from pygments.formatters import TerminalFormatter
 from pygments.lexers import YamlLexer
 
 VERSION_FILE = "__version__"
-PREINSTALL_PLAYBOOK = "preinstall.yml"
+INSTALL_DOCKER_PLAYBOOK = "install_docker.yml"
 INSTALL_PLAYBOOK = "install.yml"
 UNINSTALL_PLAYBOOK = "uninstall.yml"
 VALIDATE_PLAYBOOK = "validate.yml"
@@ -286,6 +286,7 @@ def check_images_exist(variables, host=None):
         image_cmd = ""
 
     missing_images = []
+    print("Checking images...")
     for image in variables.get("docker_images", []):
         # Will return 0 if image exists, 1 if it does not.
         returncode = run(image_cmd + f"docker manifest inspect {image} > /dev/null")
@@ -391,13 +392,6 @@ def upgrade(ctx, config_file, host, controller, image, tags, verbose, password):
         generated_config["e2e_image"] = image
 
     hosts = generate_host_groups(host)
-    a.run(
-        hosts,
-        PREINSTALL_PLAYBOOK,
-        config_file=installer_opts.config_file,
-        generated_config=variables,
-        password=password,
-    )
 
     sys.exit(
         a.run(
@@ -486,14 +480,37 @@ def load_variables(config_file):
     return variables
 
 
-def get_check_image_host(ctx, installer_opts, variables):
-    """Find the host used to check image existance"""
-    hosts = gather_hosts(ctx, installer_opts, variables)
-    host = hosts[0][0] if hosts[0][0] != "host.example.com" else None
+def install_docker(a, hosts, installer_opts, variables, password):
+    """Installs docker onto the machines
+
+    If docker was installed, returns the first host.
+    Else if docker already exists or no config file is passed in,
+    it will return None.
+    """
+    host = None
+    if installer_opts.config_file:
+        # Check if docker already exists on the host
+        host = hosts[0][0] if hosts[0][0] != "host.example.com" else None
+        returncode = run(f"ssh {host} docker --version")
+        if returncode == 127:
+            # Command doesn't exist, install docker
+            a.run(
+                hosts,
+                INSTALL_DOCKER_PLAYBOOK,
+                config_file=installer_opts.config_file,
+                generated_config=variables,
+                password=password,
+            )
     return host
 
 
 @cli.command()
+@click.option(
+    "--nonfatal-image-check",
+    is_flag=True,
+    default=False,
+    help="Checks for image, but doesn't fail installation if images are missing.",
+)
 @add_installer_opts()
 @click.pass_context
 @rage.log_command(RAGE_DIR)
@@ -512,32 +529,25 @@ def check_images(ctx, installer_opts):
 
     version = get_version(installer_opts)
     variables = generate_variables(ctx, installer_opts, version)
+    hosts = gather_hosts(ctx, installer_opts, variables)
+    a = prepare_ansible(ctx, installer_opts, variables)
 
-    host = get_check_image_host(ctx, installer_opts, variables)
-    if installer_opts.config_file:
-        # Check if docker already exists on the host
-        returncode = run(f"ssh {host} docker --version")
-        if returncode == 127:
-            # Command doesn't exist, install docker
-            a = prepare_ansible(ctx, installer_opts, variables)
-            a.run(
-                hosts,
-                PREINSTALL_PLAYBOOK,
-                config_file=installer_opts.config_file,
-                generated_config=variables,
-                password=password,
-            )
-
+    host = install_docker(a, hosts, installer_opts, variables, password)
     missing_images = check_images_exist(variables, host)
-    ctx.exit(1) if len(missing_images) else ctx.exit()
+    if not installer_opts.other_options.get("nonfatal_image_check") and len(
+        missing_images
+    ):
+        ctx.exit(1)
+    else:
+        ctx.exit()
 
 
 @cli.command()
 @click.option(
-    "--strict",
+    "--nonfatal-image-check",
     is_flag=True,
     default=False,
-    help="Fails the install if any images don't exist in the registry.",
+    help="Checks for image, but doesn't fail installation if images are missing.",
 )
 @add_installer_opts()
 @click.pass_context
@@ -550,22 +560,15 @@ def install(ctx, installer_opts):
 
     version = get_version(installer_opts)
     variables = generate_variables(ctx, installer_opts, version)
-
-    if installer_opts.other_options.get("strict"):
-        host = get_check_image_host(ctx, installer_opts, variables)
-        missing_images = check_images_exist(variables, host)
-        if len(missing_images):
-            ctx.exit(1)
-
     hosts = gather_hosts(ctx, installer_opts, variables)
     a = prepare_ansible(ctx, installer_opts, variables)
-    a.run(
-        hosts,
-        PREINSTALL_PLAYBOOK,
-        config_file=installer_opts.config_file,
-        generated_config=variables,
-        password=password,
-    )
+
+    host = install_docker(a, hosts, installer_opts, variables, password)
+    missing_images = check_images_exist(variables, host)
+    if not installer_opts.other_options.get("nonfatal_image_check") and len(
+        missing_images
+    ):
+        ctx.exit(1)
 
     sys.exit(
         a.run(
