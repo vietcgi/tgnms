@@ -35,6 +35,7 @@ jobs:
         run: |
           RELEASE=${GITHUB_REF##*/}
           echo "LTS version is: $RELEASE"
+          git tag -l ${RELEASE}*
           TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
           echo "Most recent tag is $TAG"
           if [ "$TAG" = "" ]; then
