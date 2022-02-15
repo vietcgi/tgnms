@@ -33,8 +33,10 @@ jobs:
 
       - name: LTS Patch Tagging
         run: |
-          RELEASE=${GIT_BRANCH#origin/releases/}
+          RELEASE=${{ env.BRANCH }}
           TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
+          echo RELEASE
+          echo TAG
           if [ "$TAG" = "" ]; then
             git tag "${RELEASE}.1"
           else
