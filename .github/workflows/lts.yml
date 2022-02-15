@@ -29,6 +29,6 @@ jobs:
           if [ "$TAG" = "" ]; then
             git tag "${RELEASE}.1"
           else
-            git tag "${RELEASE}.$((${TAG##*.} + 2))"
+            git tag "${RELEASE}.$((${TAG##*.} + 1))"
           fi
           git push origin --tags
