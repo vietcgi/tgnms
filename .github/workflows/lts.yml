@@ -33,7 +33,8 @@ jobs:
 
       - name: LTS Patch Tagging
         run: |
-          RELEASE=${ env.BRANCH }
+          RELEASE=${GITHUB_REF##*/}
+          echo $RELEASE
           TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
           echo $RELEASE
           echo $TAG
