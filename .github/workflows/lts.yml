@@ -29,15 +29,15 @@ jobs:
           password: ${{ env.DOCKER_PASSWORD }}
 
       - name: Switch to Current Branch
-        run: git checkout ${ env.BRANCH }
+        run: git checkout ${{ env.BRANCH }}
 
       - name: LTS Patch Tagging
         run: |
-          RELEASE=${GITHUB_REF##*/}
+                    RELEASE=${GITHUB_REF##*/}
           echo $RELEASE
           TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
-          echo $RELEASE
-          echo $TAG
+          echo RELEASE
+          echo TAG
           if [ "$TAG" = "" ]; then
             git tag "${RELEASE}.1"
           else
