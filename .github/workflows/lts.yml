@@ -1,0 +1,42 @@
+name: LTS
+
+on:
+  push:
+    branches:
+    - 'releases/**'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        python-version: [3.8.12]
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_REGISTRY: ghcr.io
+      DOCKER_USERNAME: ${{ github.actor }}
+      DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
+
+      - name: Switch to Current Branch
+        run: git checkout ${{ env.BRANCH }}
+
+      - name: LTS Patch Tagging
+        run: |
+          TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
+          if [ "$TAG" = "" ]; then
+            git tag "${RELEASE}.1"
+          else
+            git tag "${RELEASE}.$((${TAG##*.} + 2))"
+          fi
+          git push origin --tags
