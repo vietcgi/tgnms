@@ -22,16 +22,13 @@ jobs:
       - name: LTS Patch Tagging
         run: |
           git fetch --prune --unshallow --tags
-          echo exit code $?
-          git tag --list
           RELEASE=${GITHUB_REF##*/}
           echo "LTS version is: $RELEASE"
-          git tag -l
-          TAG=`git tag -l`
+          TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
           echo "Most recent tag is $TAG"
           if [ "$TAG" = "" ]; then
             git tag "${RELEASE}.1"
           else
-            git tag "${RELEASE}.$((${TAG##*.} + 2))"
+            git tag "${RELEASE}.$((${TAG##*.} + 1))"
           fi
           git push origin --tags
