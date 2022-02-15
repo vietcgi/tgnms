@@ -20,7 +20,7 @@ jobs:
         run: |
           git fetch --prune --unshallow --tags
           RELEASE=${GITHUB_REF##*/}
-          TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
+          TAG=`git tag -l ${RELEASE}* | sort -r -V | head -n1`
 
           echo "LTS version is: $RELEASE"
           echo "Most recent tag is $TAG"
