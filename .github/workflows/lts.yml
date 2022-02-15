@@ -34,10 +34,9 @@ jobs:
       - name: LTS Patch Tagging
         run: |
           RELEASE=${GITHUB_REF##*/}
-          echo $RELEASE
+          echo "LTS version is: $RELEASE"
           TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
-          echo RELEASE
-          echo TAG
+          echo "Most recent tag is $TAG"
           if [ "$TAG" = "" ]; then
             git tag "${RELEASE}.1"
           else
