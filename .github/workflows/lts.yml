@@ -21,6 +21,9 @@ jobs:
 
       - name: LTS Patch Tagging
         run: |
+          git fetch --prune --unshallow --tags
+          echo exit code $?
+          git tag --list
           RELEASE=${GITHUB_REF##*/}
           echo "LTS version is: $RELEASE"
           git tag -l
