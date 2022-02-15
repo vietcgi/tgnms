@@ -16,15 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Switch to Current Branch
-        run: git checkout ${{ env.BRANCH }}
-
       - name: LTS Patch Tagging
         run: |
           git fetch --prune --unshallow --tags
           RELEASE=${GITHUB_REF##*/}
-          echo "LTS version is: $RELEASE"
           TAG=`git tag -l ${RELEASE}* | sort -r | head -n1`
+
+          echo "LTS version is: $RELEASE"
           echo "Most recent tag is $TAG"
           if [ "$TAG" = "" ]; then
             git tag "${RELEASE}.1"
