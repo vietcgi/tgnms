@@ -23,7 +23,7 @@ jobs:
         run: |
           RELEASE=${GITHUB_REF##*/}
           echo "LTS version is: $RELEASE"
-          TAG=`git tag -l ${RELEASE}*`
+          TAG=`git tag -l lts-nms-21.12*`
           echo "Most recent tag is $TAG"
           if [ "$TAG" = "" ]; then
             git tag "${RELEASE}.1"
