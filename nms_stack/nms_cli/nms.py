@@ -219,7 +219,7 @@ common_options = {
     "verbose": click.option("-v", "--verbose", count=True, default=0),
     "image-version": click.option(
         "--image-version",
-        help="Which image version to use. Default is latest version.",
+        help="Which image version to use. Default is latest version. ",
     ),
 }
 
