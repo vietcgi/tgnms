@@ -219,7 +219,7 @@ common_options = {
     "verbose": click.option("-v", "--verbose", count=True, default=0),
     "image-version": click.option(
         "--image-version",
-        help="Which image version to use. Default is latest version. ",
+        help="Which image version to use. Default is latest version.",
     ),
 }
 
@@ -244,7 +244,6 @@ def run(cmd: str) -> None:
 
 def check_images_exist(variables, host=None):
     """Checks the docker registry for the images.
-
     Returns the images missing. If a host is passed in, then it will
     run docker on that host, else it will run locally.
     """
@@ -255,16 +254,24 @@ def check_images_exist(variables, host=None):
         "DOCKER_PASSWORD"
     )
     docker_username = variables.get("docker_registry_username") or os.environ.get(
-        "DOCKER_USER"
+        "DOCKER_USERNAME"
     )
     if not (docker_password and docker_username and docker_registry):
+        missing_config_fields = []
+        missing_env_fields = []
+        if not docker_password:
+            missing_config_fields.append("docker_registry_password")
+            missing_env_fields.append("DOCKER_PASSWORD")
+        if not docker_registry:
+            missing_config_fields.append("docker_registry_url")
+            missing_env_fields.append("DOCKER_REGISTRY")
+        if not docker_username:
+            missing_config_fields.append("docker_registry_username")
+            missing_env_fields.append("DOCKER_USERNAME")
         raise RuntimeError(
-            (
-                "Missing docker password/username/registry. "
-                "Please specify in your configuration file or "
-                "as environment variables: DOCKER_PASSWORD, "
-                "DOCKER_USER, and DOCKER_REGISTRY"
-            )
+            "Missing docker parameters. "
+            f"Please specify in your configuration file ({', '.join(missing_config_fields)}) "
+            f"or as environment variables ({', '.join(missing_env_fields)})."
         )
 
     if host:
@@ -484,7 +491,6 @@ def load_variables(config_file):
 
 def install_docker(a, hosts, installer_opts, variables, password):
     """Installs docker onto the machines
-
     If docker was installed, returns the first host.
     Else if docker already exists or no config file is passed in,
     it will return None.
@@ -518,10 +524,8 @@ def install_docker(a, hosts, installer_opts, variables, password):
 @rage.log_command(RAGE_DIR)
 def check_images(ctx, installer_opts):
     """Check for existance of images.
-
     nms check-images -f config.yml => uses the host defined in config to run docker
     nms check-images => uses local environment to run docker
-
     If `image-version` is NOT passed in, then we use the same version
     as the installer as the image tag to lookup.
     """
