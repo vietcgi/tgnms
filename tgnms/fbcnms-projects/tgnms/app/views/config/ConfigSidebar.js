@@ -68,11 +68,6 @@ const useStyles = makeStyles(theme => ({
   selectedNodeSecondaryText: {
     lineHeight: 1.2,
   },
-  nodeupdateIcon: {
-    fontSize: 14,
-    verticalAlign: 'text-top',
-    paddingLeft: theme.spacing(),
-  },
   nodeConfigSearch: {
     border: '1px solid lightGray',
     fontSize: 12,
@@ -397,11 +392,12 @@ export default function ConfigSidebar(props: Props) {
   return (
     <>
       <div className={classes.header}>
-        <Typography variant="h6">Configuration Options</Typography>
+        <Typography variant="body1">Configuration Options</Typography>
       </div>
       <div className={classes.sidePad}>
         <TextField
           label="Editor"
+          id="editor"
           select
           InputLabelProps={{shrink: true}}
           margin="dense"
@@ -421,6 +417,7 @@ export default function ConfigSidebar(props: Props) {
             <div className={classes.sidePad}>
               <TextField
                 label="Change Base Version"
+                id="base-version"
                 select
                 InputLabelProps={{shrink: true}}
                 margin="dense"
@@ -435,6 +432,7 @@ export default function ConfigSidebar(props: Props) {
               </TextField>
               <TextField
                 label="Change Firmware Version"
+                id="fw-version"
                 select
                 InputLabelProps={{shrink: true}}
                 margin="dense"
@@ -449,6 +447,7 @@ export default function ConfigSidebar(props: Props) {
               </TextField>
               <TextField
                 label="Change Hardware Type"
+                id="hw-type"
                 select
                 InputLabelProps={{shrink: true}}
                 margin="dense"
@@ -500,6 +499,7 @@ export default function ConfigSidebar(props: Props) {
           <div className={classes.sidePad}>
             <TextField
               label="Filter"
+              id="filter"
               select
               InputLabelProps={{shrink: true}}
               margin="dense"

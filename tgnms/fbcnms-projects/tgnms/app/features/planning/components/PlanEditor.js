@@ -9,7 +9,9 @@ import * as networkPlanningAPIUtil from '@fbcnms/tg-nms/app/apiutils/NetworkPlan
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
-import SelectOrUploadInputFile from './SelectOrUploadInputFile';
+import ManageInputFile from './ManageInputFile';
+import ManageSitesFile from './ManageSitesFile';
+import SelectHardwareProfiles from './SelectHardwareProfiles';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import useLiveRef from '@fbcnms/tg-nms/app/hooks/useLiveRef';
@@ -19,7 +21,7 @@ import {LAUNCHING_NETWORK_PLAN_STATES} from '@fbcnms/tg-nms/shared/dto/NetworkPl
 import {debounce, isEmpty} from 'lodash';
 import {isNullOrEmptyString} from '@fbcnms/tg-nms/app/helpers/StringHelpers';
 import {makeStyles} from '@material-ui/styles';
-import {usePlanFormState} from '@fbcnms/tg-nms/app/features/planning/PlanningHooks';
+
 import type {NetworkPlan} from '@fbcnms/tg-nms/shared/dto/NetworkPlan';
 import type {PlanFormState} from '@fbcnms/tg-nms/app/features/planning/PlanningHooks';
 
@@ -39,8 +41,10 @@ export default function PlanEditor({
   onPlanLaunched: number => void | Promise<void>,
 }) {
   const classes = useStyles();
+  const [planState, setPlanFormState] = React.useState<$Shape<PlanFormState>>(
+    {},
+  );
   // reconstruct the form-state from plan and input files
-  const {planState, updatePlanState, setPlanFormState} = usePlanFormState();
   React.useEffect(() => {
     const formState: PlanFormState = {
       id: plan.id,
@@ -48,6 +52,7 @@ export default function PlanEditor({
       dsm: plan.dsmFile,
       boundary: plan.boundaryFile,
       siteList: plan.sitesFile,
+      hardwareBoardIds: plan.hardwareBoardIds,
     };
     setPlanFormState(formState);
   }, [plan, folderId, setPlanFormState]);
@@ -57,15 +62,14 @@ export default function PlanEditor({
       LAUNCHING_NETWORK_PLAN_STATES.has(plan.state) ? 'LOADING' : 'IDLE',
   });
   const savePlanTask = useTaskState();
-
   const onPlanUpdatedRef = useLiveRef(onPlanUpdated);
   const savePlan = React.useCallback(
-    async planState => {
+    async (planState: PlanFormState) => {
       if (isEmpty(planState)) return;
       try {
         savePlanTask.setMessage(null);
         savePlanTask.loading();
-        const {id, name, dsm, boundary, siteList} = planState;
+        const {id, name, dsm, boundary, siteList, hardwareBoardIds} = planState;
         for (const f of [dsm, boundary, siteList]) {
           if (f == null) {
             continue;
@@ -83,6 +87,7 @@ export default function PlanEditor({
           dsmFileId: dsm?.id,
           boundaryFileId: boundary?.id,
           sitesFileId: siteList?.id,
+          hardwareBoardIds: hardwareBoardIds,
         });
         onPlanUpdatedRef.current(updatedPlan);
         savePlanTask.success();
@@ -98,11 +103,13 @@ export default function PlanEditor({
     savePlan,
   ]);
 
-  React.useEffect(() => {
-    (async () => {
-      await savePlanDebounced(planState);
-    })();
-  }, [planState, savePlanDebounced]);
+  const updatePlanState = (update: $Shape<PlanFormState>) => {
+    setPlanFormState(curr => {
+      const state = {...curr, ...update};
+      savePlanDebounced(state);
+      return state;
+    });
+  };
 
   const handleStartPlanClicked = React.useCallback(async () => {
     try {
@@ -114,7 +121,13 @@ export default function PlanEditor({
       startPlanTask.success();
     } catch (err) {
       startPlanTask.error();
-      startPlanTask.setMessage(err.message);
+      if (err.response?.data?.errors != null) {
+        startPlanTask.setMessage(
+          `Plan failed to launch: ${err.response.data.errors.join('\n')}`,
+        );
+      } else {
+        startPlanTask.setMessage(err.message);
+      }
     }
   }, [onPlanLaunched, plan, startPlanTask]);
 
@@ -138,33 +151,44 @@ export default function PlanEditor({
           }}
         />
       </Grid>
-
-      <SelectOrUploadInputFile
-        id="select-dsm-file"
-        label="DSM File"
-        fileTypes=".tif"
-        role={FILE_ROLE.DSM_GEOTIFF}
-        initialValue={planState.dsm ?? null}
-        onChange={f => updatePlanState({dsm: f})}
-      />
-      <SelectOrUploadInputFile
-        id="select-sites-file"
-        label="Sites File"
-        fileTypes=".csv"
-        role={FILE_ROLE.URBAN_SITE_FILE}
-        initialValue={planState.siteList ?? null}
-        onChange={f => updatePlanState({siteList: f})}
-      />
-      <SelectOrUploadInputFile
-        id="select-boundary-file"
-        label="Boundary File"
-        fileTypes=".kml"
-        role={FILE_ROLE.BOUNDARY_FILE}
-        initialValue={planState.boundary ?? null}
-        onChange={f => updatePlanState({boundary: f})}
-      />
+      <Grid item>
+        <ManageInputFile
+          id="select-dsm-file"
+          label="DSM File"
+          fileTypes=".tif"
+          role={FILE_ROLE.DSM_GEOTIFF}
+          initialValue={planState.dsm}
+          onChange={f => updatePlanState({dsm: f})}
+        />
+      </Grid>
+      <Grid item>
+        <ManageSitesFile
+          id="select-sites-file"
+          initialValue={planState.siteList}
+          onChange={f => updatePlanState({siteList: f})}
+        />
+      </Grid>
+      <Grid item>
+        <ManageInputFile
+          id="select-boundary-file"
+          label="Boundary File"
+          fileTypes=".kml"
+          role={FILE_ROLE.BOUNDARY_FILE}
+          initialValue={planState.boundary}
+          onChange={f => updatePlanState({boundary: f})}
+        />
+      </Grid>
+      <Grid item>
+        <SelectHardwareProfiles
+          id="select-hardware-profiles"
+          onChange={ids => {
+            updatePlanState({hardwareBoardIds: ids});
+          }}
+          initialProfiles={plan.hardwareBoardIds}
+        />
+      </Grid>
       {!startPlanTask.isLoading && (
-        <Grid item container justify="flex-end" spacing={1}>
+        <Grid item container justifyContent="flex-end" spacing={1}>
           <Grid item>
             {savePlanTask.isLoading && <CircularProgress size={10} />}
             <Typography className={classes.error} variant="caption">
@@ -184,8 +208,15 @@ export default function PlanEditor({
         </Grid>
       )}
       {startPlanTask.isLoading && (
-        <Grid container justify="center">
+        <Grid container justifyContent="center">
           <CircularProgress data-testid="launch-loading-circle" size={20} />
+        </Grid>
+      )}
+      {startPlanTask.isError && (
+        <Grid item>
+          <Typography className={classes.error} variant="caption">
+            {startPlanTask.message}
+          </Typography>
         </Grid>
       )}
     </Grid>

@@ -5,9 +5,11 @@
  * @format
  */
 
+import * as fs from 'fs';
 import axios from 'axios';
 import {DEFAULT_FILE_UPLOAD_CHUNK_SIZE} from '@fbcnms/tg-nms/shared/dto/FacebookGraph';
 import {Readable} from 'stream';
+import {isPlainObject, pick} from 'lodash';
 import {stringify} from 'querystring';
 import {trimEnd} from 'lodash';
 import type {$AxiosXHR} from 'axios';
@@ -150,7 +152,9 @@ export default class ANPAPIClient {
     return result.data;
   };
   getPlanErrors = async (id: string) => {
-    const result = await this.makeRequest<GraphQueryResponse<ANPFileHandle>>({
+    const result = await this.makeRequest<
+      GraphQueryResponse<{error_message: string}>,
+    >({
       id,
       edge: 'errors',
       query: {fields: 'error_message'},
@@ -239,17 +243,25 @@ export default class ANPAPIClient {
     boundary_polygon,
     dsm,
     site_list,
+    device_list_file,
   }: CreateANPPlanRequest): Promise<ANPPlan> {
+    const query: {[string]: string | number} = {
+      plan_name,
+      boundary_polygon,
+      digital_surface_model: dsm,
+      site_list,
+    };
+    if (
+      typeof device_list_file === 'string' &&
+      device_list_file.trim() !== ''
+    ) {
+      query.device_list_file = device_list_file;
+    }
     return this.makeRequest<ANPPlan>({
       id: folder_id,
       edge: 'terragraph_basic_plan',
       method: 'POST',
-      query: {
-        plan_name,
-        boundary_polygon,
-        digital_surface_model: dsm,
-        site_list,
-      },
+      query: query,
     });
   }
 
@@ -394,7 +406,6 @@ export default class ANPAPIClient {
       headers,
       method,
     });
-    logAxiosResponse(response);
     return response.data;
   }
 
@@ -429,14 +440,16 @@ export default class ANPAPIClient {
       data: data,
       responseType: responseType ?? 'json',
     };
+
     try {
       const response = await axios<TReq | void, TRes>(config);
+      logAxios(response);
       return response;
     } catch (err) {
       if (err.response) {
-        logAxiosResponse(err.response);
+        logAxios(err.response);
       } else {
-        console.dir(err);
+        console.error(err);
       }
       throw err;
     }
@@ -495,10 +508,24 @@ export default class ANPAPIClient {
   };
 }
 
-function logAxiosResponse<T, R>(xhr: $AxiosXHR<T, R>) {
-  const {data, headers, status, statusText, config} = xhr;
-  console.dir({
-    response: {data, headers, status, statusText},
-    request: config,
-  });
+function logAxios<T, R>(xhr: $AxiosXHR<T, R>) {
+  const logfile = process.env.PLANNER_REQUEST_LOGFILE;
+  if (typeof logfile === 'string') {
+    try {
+      const {data, headers, status, statusText, config} = xhr;
+      const log = {
+        request: pick(config, ['headers', 'method', 'url']),
+        response: {
+          data: isPlainObject(data) ? data : '[Omitted]',
+          headers,
+          status,
+          statusText,
+        },
+      };
+      fs.appendFileSync(logfile, JSON.stringify(log, null, 2) + '\n');
+    } catch (err) {
+      console.error(xhr);
+      console.error(err);
+    }
+  }
 }

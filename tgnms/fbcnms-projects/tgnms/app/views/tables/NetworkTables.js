@@ -32,7 +32,7 @@ import {
   NETWORK_BASE,
   NETWORK_TABLES_BASE_PATH,
 } from '@fbcnms/tg-nms/app/constants/paths';
-import {NETWORK_TABLE_HEIGHTS} from '@fbcnms/tg-nms/app/constants/StyleConstants';
+
 import {TOPOLOGY_ELEMENT} from '@fbcnms/tg-nms/app/constants/NetworkConstants.js';
 import {isFeatureEnabled} from '@fbcnms/tg-nms/app/constants/FeatureFlags';
 import {makeStyles} from '@material-ui/styles';
@@ -130,10 +130,6 @@ export default function NetworkTables(props: Props) {
     },
     [pathname],
   );
-  const tableProps: NetworkTableProps = {
-    tableHeight:
-      tableHeight != null ? tableHeight - NETWORK_TABLE_HEIGHTS.TABS : null,
-  };
 
   /**
    * If a topology table is selected or no table is selected, switch tables
@@ -248,7 +244,12 @@ export default function NetworkTables(props: Props) {
               )}
           </Tabs>
         </Grid>
-        <Grid container item xs={4} justify="flex-end" alignItems="center">
+        <Grid
+          container
+          item
+          xs={4}
+          justifyContent="flex-end"
+          alignItems="center">
           {selectedTable === TABLE_TYPE.nodes && ( //export nodes only for now
             <Grid item>
               <ExportMenu selectedTable={selectedTable} />
@@ -274,7 +275,7 @@ export default function NetworkTables(props: Props) {
       <Switch>
         <Route
           path={`${NETWORK_BASE}/${TABLE_TYPE.links}`}
-          render={() => <NetworkLinksTable {...tableProps} />}
+          render={() => <NetworkLinksTable />}
         />
         <Route
           path={`${NETWORK_BASE}/${TABLE_TYPE.tests}`}
@@ -286,13 +287,13 @@ export default function NetworkTables(props: Props) {
         />
         <Route
           path={`${NETWORK_BASE}/${TABLE_TYPE.planning}`}
-          render={() => <NetworkPlanningTable {...tableProps} />}
+          render={() => <NetworkPlanningTable />}
         />
         {/** Don't put any new routes below here, nodes is the default */}
         <Route
           path={`${NETWORK_BASE}(/${TABLE_TYPE.nodes})?`}
           exact={false}
-          render={() => <NetworkNodesTable {...tableProps} />}
+          render={() => <NetworkNodesTable />}
         />
       </Switch>
     </div>

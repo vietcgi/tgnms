@@ -17,7 +17,6 @@ import {
   ANP_SITE_TYPE_PRETTY,
   ANP_STATUS_TYPE_PRETTY,
 } from '@fbcnms/tg-nms/app/constants/TemplateConstants';
-import {NETWORK_TABLE_HEIGHTS} from '@fbcnms/tg-nms/app/constants/StyleConstants';
 import {
   PLANNING_FOLDER_PATH,
   PLANNING_PLAN_PATH,
@@ -42,6 +41,7 @@ const tableStyle = {
 };
 const useStyles = makeStyles(theme => ({
   summaryRoot: {
+    paddingLeft: 0,
     flexDirection: 'row-reverse',
     '&.Mui-expanded': {
       minHeight: 'inherit',
@@ -58,7 +58,8 @@ const useStyles = makeStyles(theme => ({
   },
   header: {
     width: '100%',
-    paddingLeft: theme.spacing(1),
+    paddingLeft: theme.spacing(2),
+    paddingBottom: theme.spacing(2),
   },
   accordion: {
     borderBottom: '1px solid ' + theme.palette.divider,
@@ -144,7 +145,7 @@ export type LinkRowSchema = {
   length: number,
 };
 
-export default function TopologyTable({tableHeight}: NetworkTableProps) {
+export default function TopologyTable(_props: NetworkTableProps) {
   const classes = useStyles();
   const history = useHistory();
   const {pathname} = useLocation();
@@ -160,16 +161,12 @@ export default function TopologyTable({tableHeight}: NetworkTableProps) {
   const tableOptions = React.useMemo(
     () => ({
       selection: true,
-      pageSize: 5,
-      pageSizeOptions: [5, 10],
-      maxBodyHeight:
-        tableHeight != null
-          ? tableHeight -
-            NETWORK_TABLE_HEIGHTS.MTABLE_FILTERING -
-            NETWORK_TABLE_HEIGHTS.MTABLE_TOOLBAR
-          : NETWORK_TABLE_HEIGHTS.MTABLE_MAX_HEIGHT,
+      minBodyHeight: 400,
+      maxBodyHeight: 400,
+      pageSize: 10,
+      pageSizeOptions: [5, 10, 20],
     }),
-    [tableHeight],
+    [],
   );
 
   // Open the Plans Table if no plan is selected anymore.

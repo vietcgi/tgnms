@@ -11,7 +11,6 @@ export default [
   '/favicon.ico',
   '/static/dist/vendor',
   '/static/dist/login',
-  '/mobileapp/clientconfig',
   '/healthcheck',
   '/static/css',
   '/static/fonts',
@@ -20,5 +19,4 @@ export default [
   '/user/logout',
   // protected by middleware/otp
   '/static/tg-binaries',
-  '/nodeupdateservice/downloadimage',
 ];

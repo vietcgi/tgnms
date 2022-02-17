@@ -12,11 +12,9 @@ import MaterialTable from '@fbcnms/tg-nms/app/components/common/MaterialTable';
 import PlanActionsMenu from './PlanActionsMenu';
 import PlanStatus from '@fbcnms/tg-nms/app/features/planning/components/PlanStatus';
 import React from 'react';
-import TableToolbar, {TableToolbarAction} from './TableToolbar';
 import grey from '@material-ui/core/colors/grey';
 import useInterval from '@fbcnms/ui/hooks/useInterval';
 import {NETWORK_PLAN_STATE} from '@fbcnms/tg-nms/shared/dto/NetworkPlan';
-import {NETWORK_TABLE_HEIGHTS} from '@fbcnms/tg-nms/app/constants/StyleConstants';
 import {
   PLANNING_BASE_PATH,
   PLANNING_FOLDER_PATH,
@@ -43,7 +41,7 @@ const useStyles = makeStyles(() => ({
   actionsButton: {display: 'flex', width: '100%', justifyContent: 'end'},
 }));
 
-export default function PlansTable({tableHeight}: NetworkTableProps) {
+export default function PlansTable(_props: NetworkTableProps) {
   const classes = useStyles();
   const match = useParams();
   const location = useLocation();
@@ -65,14 +63,12 @@ export default function PlansTable({tableHeight}: NetworkTableProps) {
       {
         title: 'Name',
         field: 'name',
-        grouping: false,
         width: 100,
       },
       {
         title: 'Status',
         field: 'state',
-        grouping: false,
-        width: 40,
+        width: 100,
         render: (rowData: NetworkPlan) => <PlanStatus state={rowData.state} />,
       },
     ],
@@ -89,31 +85,9 @@ export default function PlansTable({tableHeight}: NetworkTableProps) {
   const tableOptions = React.useMemo(
     () => ({
       showTitle: true,
-      minBodyHeight:
-        tableHeight != null
-          ? tableHeight -
-            NETWORK_TABLE_HEIGHTS.MTABLE_PAGINATION -
-            NETWORK_TABLE_HEIGHTS.MTABLE_TOOLBAR
-          : NETWORK_TABLE_HEIGHTS.MTABLE_MAX_HEIGHT,
-      maxBodyHeight:
-        tableHeight != null
-          ? tableHeight -
-            NETWORK_TABLE_HEIGHTS.MTABLE_PAGINATION -
-            NETWORK_TABLE_HEIGHTS.MTABLE_TOOLBAR
-          : NETWORK_TABLE_HEIGHTS.MTABLE_MAX_HEIGHT,
-      pageSize: 20,
-      pageSizeOptions: [20, 50, 100],
-      padding: 'dense',
-      tableLayout: 'fixed',
       rowStyle: makeRowStyle,
-      toolbarButtonAlignment: 'right',
-      searchFieldStyle: {
-        marginRight: '16px',
-      },
-      emptyRowsWhenPaging: false,
-      actionsColumnIndex: -1,
     }),
-    [makeRowStyle, tableHeight],
+    [makeRowStyle],
   );
 
   const handleRowClick = React.useCallback(
@@ -123,7 +97,7 @@ export default function PlansTable({tableHeight}: NetworkTableProps) {
     [setSelectedPlanId],
   );
 
-  // Open the Topology Table only if the plan is SUCCESS.
+  // Open the PlanView if the plan is successful or a draft
   React.useEffect(() => {
     if (selectedPlanId && plan?.state === NETWORK_PLAN_STATE.SUCCESS) {
       const match = matchPath(location.pathname, {
@@ -179,8 +153,6 @@ export default function PlansTable({tableHeight}: NetworkTableProps) {
         columns={columns}
         onRowClick={handleRowClick}
         isLoading={loadPlansTask.isLoading}
-        // removes the Actions column header text
-        localization={{header: {actions: ''}}}
         actions={[
           {
             position: 'toolbar',
@@ -197,10 +169,6 @@ export default function PlansTable({tableHeight}: NetworkTableProps) {
             Component: PlanActionsComponent,
           },
         ]}
-        components={{
-          Toolbar: TableToolbar,
-          Action: TableToolbarAction,
-        }}
       />
       <CreatePlanModal
         isOpen={createPlanModal.isOpen}

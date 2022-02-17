@@ -45,7 +45,7 @@ export default function RenderTopologyElement({
   const snackbars = useSnackbars();
 
   const {type, name, expanded} = element;
-  const {editSite, editNode} = useTopologyBuilderContext();
+  const {editSite, editNode, editL2Tunnel} = useTopologyBuilderContext();
   const {
     networkConfig,
     pinnedElements,
@@ -156,6 +156,7 @@ export default function RenderTopologyElement({
           onPin={() => togglePin(type, name, !pinned)}
           onClose={handleClosePanel}
           onEdit={nodeName => editNode(nodeName)}
+          onEditTunnel={tunnelInfo => editL2Tunnel(tunnelInfo)}
           {...searchNearbyProps}
           {...routesPropsWithoutNode}
           node={node}
@@ -200,6 +201,7 @@ export default function RenderTopologyElement({
           expanded={expanded}
           onPanelChange={() => toggleExpanded(type, name, !expanded)}
           networkName={networkName}
+          networkConfig={networkConfig}
           topology={topology}
           site={site}
           siteMap={siteMap}

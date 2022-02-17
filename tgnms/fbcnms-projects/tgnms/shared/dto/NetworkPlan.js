@@ -4,6 +4,9 @@
  * @format
  * @flow
  */
+import type {FileRoles} from './ANP';
+import type {SiteType} from '../types/Topology';
+
 export type CreatePlanFolderRequest = {|
   name: string,
 |};
@@ -17,6 +20,7 @@ type PlanParams = {|
   dsmFileId?: ?number,
   boundaryFileId?: ?number,
   sitesFileId?: ?number,
+  hardwareBoardIds?: ?Array<string>,
 |};
 export type CreateNetworkPlanRequest = {|
   folderId: number,
@@ -70,6 +74,11 @@ export const RUNNING_NETWORK_PLAN_STATES = new Set<string>([
   NETWORK_PLAN_STATE.RUNNING,
 ]);
 
+export const ERROR_NETWORK_PLAN_STATES = new Set<string>([
+  NETWORK_PLAN_STATE.ERROR,
+  NETWORK_PLAN_STATE.LAUNCH_ERROR,
+]);
+
 export type NetworkPlanStateType = $Keys<typeof NETWORK_PLAN_STATE>;
 
 export type PlanFolder = {|
@@ -85,6 +94,7 @@ export type NetworkPlan = {|
   dsmFile?: ?InputFile,
   boundaryFile?: ?InputFile,
   sitesFile?: ?InputFile,
+  hardwareBoardIds?: ?Array<string>,
 |};
 
 export const FILE_STATE = {
@@ -101,13 +111,13 @@ export type FileSourceKey = $Keys<typeof FILE_SOURCE>;
 
 export type NetworkPlanFile = {|
   id: number,
-  role: string,
+  role: FileRoles,
   name: string,
 |};
 
 export type InputFile = {|
   id: number,
-  role: string,
+  role: FileRoles,
   name: string,
   source?: 'fbid' | 'local',
   fbid?: ?string,
@@ -129,6 +139,19 @@ export type CreateInputFileRequest =
   | {|
       planId: number,
       source: 'local',
-      role: string,
+      role: FileRoles,
       name: string,
     |};
+
+export type SitesFile = {|id: number, sites: Array<SitesFileRow>|};
+export type SitesFileSiteType = 'CN' | 'DN' | 'POP';
+export const SITES_FILE_SITE_TYPES = new Set<SitesFileSiteType>([
+  'CN',
+  'DN',
+  'POP',
+]);
+export type SitesFileRow = {|
+  id: number,
+  type: SitesFileSiteType,
+  ...SiteType,
+|};

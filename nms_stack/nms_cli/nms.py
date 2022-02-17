@@ -491,9 +491,13 @@ def load_variables(config_file):
 
 def install_docker(a, hosts, installer_opts, variables, password):
     """Installs docker onto the machines
-    If docker was installed, returns the first host.
-    Else if docker already exists or no config file is passed in,
-    it will return None.
+    <<<<<<< HEAD
+    =======
+
+    >>>>>>> origin/main
+        If docker was installed, returns the first host.
+        Else if docker already exists or no config file is passed in,
+        it will return None.
     """
     host = None
     if installer_opts.config_file:
@@ -524,8 +528,10 @@ def install_docker(a, hosts, installer_opts, variables, password):
 @rage.log_command(RAGE_DIR)
 def check_images(ctx, installer_opts):
     """Check for existance of images.
+
     nms check-images -f config.yml => uses the host defined in config to run docker
     nms check-images => uses local environment to run docker
+
     If `image-version` is NOT passed in, then we use the same version
     as the installer as the image tag to lookup.
     """
