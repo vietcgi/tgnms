@@ -45,7 +45,7 @@ def get_release(branch, stage=False):
             release = "dev"
         else:
             release = "latest"
-    elif m := re.search(r"releases/(lts-nms-\d{2}\.\d{1,2})", branch):
+    elif m := re.search(r"(lts-nms-\d{2}\.\d{1,2})", branch):
         if stage:
             raise RuntimeError(f"Cannot build '{stage}' stage for {branch}")
         release = m.group(1)
