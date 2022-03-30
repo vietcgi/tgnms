@@ -27,7 +27,7 @@ Each Docker host must have a public IPv6 address and a private (or public) IPv4 
 
 TGNMS is deployed via Ansible scripts run by an installer tool.
 
-## Installation from Source
+### Installation from Source
 
 ```bash
 git clone https://github.com/terragraph/tgnms
